@@ -13,7 +13,11 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:migrate:prod": "prisma migrate deploy",
     "prisma:seed": "node prisma/seed.js",
-    "prisma:studio": "prisma studio"
+    "prisma:studio": "prisma studio",
+    "pretest": "dotenv -e .env.test -- npx prisma db push --skip-generate",
+    "test": "dotenv -e .env.test -- jest",
+    "test:watch": "dotenv -e .env.test -- jest --watch",
+    "test:coverage": "dotenv -e .env.test -- jest --coverage"
   },
   "keywords": [
     "cantina",
@@ -40,8 +44,14 @@
     "uuid": "^13.0.0"
   },
   "devDependencies": {
+    "@babel/core": "^7.29.0",
+    "@babel/preset-env": "^7.29.0",
+    "babel-jest": "^30.2.0",
+    "dotenv-cli": "^11.0.0",
+    "jest": "^30.2.0",
     "nodemon": "^3.1.11",
-    "prisma": "^5.22.0"
+    "prisma": "^5.22.0",
+    "supertest": "^7.2.2"
   },
   "engines": {
     "node": ">=18.0.0"

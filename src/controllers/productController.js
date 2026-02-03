@@ -38,8 +38,9 @@ class ProductController {
    */
   async getAll(req, res, next) {
     try {
-      // Passa query params para o service aplicar filtros
-      const result = await productService.getAll(req.query);
+      // Usa validatedQuery se disponivel (Express 5), senao usa query
+      const query = req.validatedQuery || req.query;
+      const result = await productService.getAll(query);
       return successResponse(res, 200, 'Produtos encontrados', result);
     } catch (error) {
       next(error);

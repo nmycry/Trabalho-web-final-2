@@ -89,8 +89,9 @@ const validateQuery = (schema) => {
       });
     }
 
-    // Substitui query pelos valores validados
-    req.query = value;
+    // No Express 5, req.query e read-only
+    // Armazena os valores validados em req.validatedQuery
+    req.validatedQuery = value;
     next();
   };
 };

@@ -36,7 +36,9 @@ const app = express();
  * Helmet: Adiciona headers de seguranca HTTP
  * - Protege contra XSS, clickjacking, etc
  */
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 
 /**
  * CORS: Permite requisicoes de outros dominios

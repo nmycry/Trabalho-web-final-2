@@ -16,10 +16,10 @@
  * - Modal para formulario de criacao/edicao
  */
 
-import { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, X } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Plus, Edit2, Trash2, X, Upload, Image } from 'lucide-react';
 import AdminLayout from '../../components/AdminLayout';
-import { productService, categoryService } from '../../services/api';
+import { productService, categoryService, getImageUrl } from '../../services/api';
 import toast from 'react-hot-toast';
 import './Admin.css';
 
@@ -51,6 +51,12 @@ export default function Products() {
     categoryId: '',
     isAvailable: true,
   });
+
+  // Estado para upload de imagem
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef(null);
 
   // ==========================================
   // EFFECTS
@@ -105,6 +111,8 @@ export default function Products() {
         categoryId: product.categoryId,
         isAvailable: product.isAvailable,
       });
+      // Mostra imagem atual como preview (usa getImageUrl para URLs locais)
+      setImagePreview(product.imageUrl ? getImageUrl(product.imageUrl) : null);
     } else {
       // Modo criacao - form vazio
       setEditingProduct(null);
@@ -115,7 +123,9 @@ export default function Products() {
         categoryId: categories[0]?.id || '',
         isAvailable: true,
       });
+      setImagePreview(null);
     }
+    setImageFile(null);
     setShowModal(true);
   };
 
@@ -125,6 +135,75 @@ export default function Products() {
   const handleCloseModal = () => {
     setShowModal(false);
     setEditingProduct(null);
+    setImageFile(null);
+    setImagePreview(null);
+  };
+
+  // ==========================================
+  // HANDLERS DE IMAGEM
+  // ==========================================
+
+  /**
+   * Trata selecao de arquivo de imagem
+   * @param {Event} e - Evento do input file
+   */
+  const handleImageSelect = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Valida tipo de arquivo
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Tipo de arquivo invalido. Use JPEG, PNG ou WebP.');
+      return;
+    }
+
+    // Valida tamanho (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Arquivo muito grande. Maximo 5MB.');
+      return;
+    }
+
+    setImageFile(file);
+
+    // Cria preview da imagem
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  /**
+   * Remove imagem selecionada
+   */
+  const handleRemoveImage = () => {
+    setImageFile(null);
+    setImagePreview(editingProduct?.imageUrl ? getImageUrl(editingProduct.imageUrl) : null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  /**
+   * Faz upload da imagem para um produto
+   * @param {string} productId - ID do produto
+   */
+  const uploadImage = async (productId) => {
+    if (!imageFile) return;
+
+    const formData = new FormData();
+    formData.append('image', imageFile);
+
+    try {
+      setUploading(true);
+      await productService.uploadImage(productId, formData);
+    } catch (error) {
+      console.error('Erro ao fazer upload:', error);
+      toast.error('Erro ao enviar imagem');
+    } finally {
+      setUploading(false);
+    }
   };
 
   // ==========================================
@@ -148,10 +227,23 @@ export default function Products() {
       if (editingProduct) {
         // Atualiza produto existente
         await productService.update(editingProduct.id, data);
+
+        // Se tem nova imagem, faz upload
+        if (imageFile) {
+          await uploadImage(editingProduct.id);
+        }
+
         toast.success('Produto atualizado');
       } else {
         // Cria novo produto
-        await productService.create(data);
+        const response = await productService.create(data);
+        const newProductId = response.data.data.product.id;
+
+        // Se tem imagem, faz upload
+        if (imageFile) {
+          await uploadImage(newProductId);
+        }
+
         toast.success('Produto criado');
       }
       fetchData();
@@ -262,7 +354,7 @@ export default function Products() {
                   <div className="product-cell">
                     <div className="product-thumb">
                       {product.imageUrl ? (
-                        <img src={product.imageUrl} alt={product.name} />
+                        <img src={getImageUrl(product.imageUrl)} alt={product.name} />
                       ) : (
                         '🍔'
                       )}
@@ -364,6 +456,59 @@ export default function Products() {
                 />
               </div>
 
+              {/* Campo: Imagem */}
+              <div className="form-group">
+                <label className="form-label">Imagem do Produto</label>
+                <div className="image-upload-container">
+                  {/* Preview da imagem */}
+                  {imagePreview ? (
+                    <div className="image-preview">
+                      <img src={imagePreview} alt="Preview" />
+                      <button
+                        type="button"
+                        className="image-remove-btn"
+                        onClick={handleRemoveImage}
+                        title="Remover imagem"
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                  ) : (
+                    <div
+                      className="image-placeholder"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <Image size={40} />
+                      <span>Clique para selecionar</span>
+                    </div>
+                  )}
+
+                  {/* Input de arquivo (oculto) */}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={handleImageSelect}
+                    className="image-input-hidden"
+                  />
+
+                  {/* Botao de selecionar/trocar */}
+                  {imagePreview && (
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <Upload size={16} />
+                      Trocar imagem
+                    </button>
+                  )}
+                </div>
+                <small className="form-hint">
+                  Formatos: JPEG, PNG, WebP. Tamanho maximo: 5MB
+                </small>
+              </div>
+
               {/* Campos lado a lado: Preco e Categoria */}
               <div className="form-row">
                 {/* Campo: Preco */}
@@ -422,11 +567,16 @@ export default function Products() {
                   type="button"
                   className="btn btn-ghost"
                   onClick={handleCloseModal}
+                  disabled={uploading}
                 >
                   Cancelar
                 </button>
-                <button type="submit" className="btn btn-primary">
-                  {editingProduct ? 'Atualizar' : 'Criar'}
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={uploading}
+                >
+                  {uploading ? 'Enviando...' : editingProduct ? 'Atualizar' : 'Criar'}
                 </button>
               </div>
             </form>

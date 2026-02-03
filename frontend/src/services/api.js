@@ -21,6 +21,14 @@ import axios from 'axios';
 // ============================================
 
 /**
+ * URL base do backend
+ * - Em desenvolvimento: http://localhost:3000
+ * - Em producao: usa VITE_API_URL ou assume mesmo dominio (string vazia)
+ */
+const API_BASE_URL = import.meta.env.VITE_API_URL ??
+  (import.meta.env.PROD ? '' : 'http://localhost:3000');
+
+/**
  * Cria instancia do Axios com configuracoes padrao
  *
  * baseURL: '/api' - Todas as requisicoes serao prefixadas com /api
@@ -34,6 +42,41 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
+// ============================================
+// HELPER PARA URLs DE IMAGEM
+// ============================================
+
+/**
+ * Resolve URL de imagem corretamente
+ *
+ * Detecta se a URL e externa (http/https) ou local (/uploads/...)
+ * e retorna a URL completa apropriada.
+ *
+ * @param {string} imageUrl - URL da imagem (pode ser externa ou local)
+ * @returns {string|null} URL completa da imagem ou null se nao houver
+ *
+ * Exemplos:
+ * - "https://example.com/img.jpg" -> "https://example.com/img.jpg"
+ * - "/uploads/products/img.jpg" -> "http://localhost:3000/uploads/products/img.jpg"
+ * - null -> null
+ */
+export const getImageUrl = (imageUrl) => {
+  if (!imageUrl) return null;
+
+  // Se ja e uma URL completa (http ou https), retorna como esta
+  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+    return imageUrl;
+  }
+
+  // Se e uma URL local (comeca com /), adiciona o base URL do backend
+  if (imageUrl.startsWith('/')) {
+    return `${API_BASE_URL}${imageUrl}`;
+  }
+
+  // Caso contrario, assume que e relativo e adiciona o base URL
+  return `${API_BASE_URL}/${imageUrl}`;
+};
 
 // ============================================
 // INTERCEPTORS

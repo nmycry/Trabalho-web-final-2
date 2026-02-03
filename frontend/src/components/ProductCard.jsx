@@ -17,6 +17,7 @@
 
 import { Plus } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
+import { getImageUrl } from '../services/api';
 import './ProductCard.css';
 
 // ============================================
@@ -107,7 +108,7 @@ export default function ProductCard({ product }) {
       <div className="product-image">
         {product.imageUrl ? (
           // Imagem real do produto
-          <img src={product.imageUrl} alt={product.name} loading="lazy" />
+          <img src={getImageUrl(product.imageUrl)} alt={product.name} loading="lazy" />
         ) : (
           // Placeholder com emoji da categoria
           <div className="product-placeholder">

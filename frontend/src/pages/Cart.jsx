@@ -19,7 +19,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Minus, Plus, Trash2, ShoppingBag } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
-import { orderService } from '../services/api';
+import { orderService, getImageUrl } from '../services/api';
 import toast from 'react-hot-toast';
 import './Cart.css';
 
@@ -154,7 +154,7 @@ export default function Cart() {
                 {/* Imagem do produto */}
                 <div className="cart-item-image">
                   {item.product.imageUrl ? (
-                    <img src={item.product.imageUrl} alt={item.product.name} />
+                    <img src={getImageUrl(item.product.imageUrl)} alt={item.product.name} />
                   ) : (
                     <div className="cart-item-placeholder">🍔</div>
                   )}
