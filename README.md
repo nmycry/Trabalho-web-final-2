@@ -275,6 +275,7 @@ npm run dev:all
 | Frontend | http://localhost:5173 |
 | Backend API | http://localhost:3000/api |
 | Prisma Studio | http://localhost:5555 |
+| Swagger UI | http://localhost:3000/api-docs |
 
 ### Scripts Disponiveis
 

@@ -10,9 +10,12 @@
  * - Servir arquivos estaticos (uploads)
  * - Rotas da API
  * - Tratamento de erros
+ * - Documentação interativa com Swagger
  */
 
 const express = require('express');
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpec = require('./config/swagger');
 const cors = require('cors');
 const helmet = require('helmet');
 const path = require('path');
@@ -81,9 +84,32 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 app.use('/api', routes);
 
 /**
+ * Rota da documentacao Swagger
+ * Disponivel em: /api-docs
+ */
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+// Rota para baixar a especificacao OpenAPI em JSON
+app.get('/api-docs.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(swaggerSpec);
+});
+
+/**
  * Rota de Health Check
  * Usada para verificar se o servidor esta funcionando
  * GET /health -> { status: 'OK', timestamp: '...' }
+ */
+/**
+ * @swagger
+ * /health:
+ *   get:
+ *     summary: Verifica o status da API
+ *     tags:
+ *       - Health
+ *     responses:
+ *       200:
+ *         description: API está funcionando normalmente
  */
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });

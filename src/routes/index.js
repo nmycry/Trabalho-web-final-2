@@ -18,6 +18,17 @@ router.use('/orders', orderRoutes);
 router.use('/dashboard', dashboardRoutes);
 
 // Rota raiz da API
+/**
+ * @swagger
+ * /api:
+ *   get:
+ *     summary: Informações da API
+ *     tags:
+ *       - Geral
+ *     responses:
+ *       200:
+ *         description: Informações básicas da API e endpoints principais
+ */
 router.get('/', (req, res) => {
   res.json({
     success: true,
