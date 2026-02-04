@@ -37,7 +37,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL ??
  * headers: Define Content-Type padrao como JSON
  */
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: `${API_BASE_URL}/api`,
   headers: {
     'Content-Type': 'application/json',
   },
